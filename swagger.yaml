@@ -1,0 +1,202 @@
+openapi: 3.0.0
+info:
+  title: Subscription Service API
+  version: 1.0.0
+  description: API для управления подписками пользователей
+
+servers:
+  - url: http://localhost:8080
+
+paths:
+  /api/v1/subscriptions:
+    post:
+      summary: Создать новую подписку
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSubscriptionRequest'
+      responses:
+        '201':
+          description: Подписка создана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Subscription'
+        '400':
+          description: Ошибка ввода
+        '500':
+          description: Внутренняя ошибка сервера
+
+    get:
+      summary: Получить список подписок с фильтрацией
+      parameters:
+        - name: user_id
+          in: query
+          schema:
+            type: string
+        - name: service_name
+          in: query
+          schema:
+            type: string
+        - name: start_after
+          in: query
+          schema:
+            type: string
+            example: "01-2025"
+        - name: end_before
+          in: query
+          schema:
+            type: string
+            example: "12-2025"
+      responses:
+        '200':
+          description: Список подписок
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Subscription'
+
+  /api/v1/subscriptions/{id}:
+    get:
+      summary: Получить подписку по ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Подписка найдена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Subscription'
+        '404':
+          description: Подписка не найдена
+
+    put:
+      summary: Обновить подписку
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSubscriptionRequest'
+      responses:
+        '200':
+          description: Подписка обновлена
+        '400':
+          description: Ошибка ввода
+        '500':
+          description: Ошибка сервера
+
+    delete:
+      summary: Удалить подписку
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Подписка удалена
+
+  /api/v1/calculate:
+    get:
+      summary: Рассчитать общую стоимость подписок за период
+      parameters:
+        - name: user_id
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: service_name
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: period_start
+          in: query
+          required: true
+          schema:
+            type: string
+            example: "01-2025"
+        - name: period_end
+          in: query
+          required: true
+          schema:
+            type: string
+            example: "12-2025"
+      responses:
+        '200':
+          description: Результат расчета
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user_id: { type: string }
+                  service_name: { type: string }
+                  period_start: { type: string }
+                  period_end: { type: string }
+                  total_cost: { type: integer }
+
+components:
+  schemas:
+    CreateSubscriptionRequest:
+      type: object
+      required: [service_name, price, user_id, start_date]
+      properties:
+        service_name:
+          type: string
+          maxLength: 255
+        price:
+          type: integer
+          minimum: 0
+        user_id:
+          type: string
+          format: uuid
+        start_date:
+          type: string
+          pattern: '^(0[1-9]|1[0-2])-\d{4}$'
+          example: "07-2025"
+        end_date:
+          type: string
+          pattern: '^(0[1-9]|1[0-2])-\d{4}$'
+          example: "12-2025"
+
+    Subscription:
+      type: object
+      properties:
+        id:
+          type: integer
+        service_name:
+          type: string
+        price:
+          type: integer
+        user_id:
+          type: string
+        start_date:
+          type: string
+          format: date
+        end_date:
+          type: string
+          format: date
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
